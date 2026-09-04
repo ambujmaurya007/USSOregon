@@ -1,0 +1,137 @@
+# .gitignore for Teddy AI
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+
+# Data and Logs
+data/
+logs/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# API keys and secrets (NEVER commit these!)
+secrets/
+*.pem
+*.key
+*.cert
+api_keys.txt
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.cache
+
+# OS specific
+.DS_Store
+Thumbs.db
+.directory
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Backup files
+*.bak
+*.backup
+*~
+*.swp
+
+# Model files (large, regeneratable)
+models/
+*.bin
+*.pt
+*.pth
+*.ckpt
+
+# Audio files (for testing)
+audio/
+*.wav
+*.mp3
+*.flac
+
+# Generated files
+*.egg-info/
+dist/
+build/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Node (if mobile app uses Node for build)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# MacOS
+.AppleDouble
+.LSOverride
+._*
+.apdisk
+
+# Linux
+.directory
+.Trash-*
+
+# Windows
+ehthumbs.db
+desktop.ini
+
+# IDE specific
+*.iml
+.gradle
+.idea/
+*.ipr
+*.iws
+
+# Misc
+.cache/
+*.orig

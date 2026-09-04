@@ -1,0 +1,109 @@
+# Teddy AI Configuration
+# Customize these settings for your setup
+
+# LLM Configuration
+llm:
+  primary_provider: "ollama"
+  
+  providers:
+    ollama:
+      enabled: true
+      api_url: "http://localhost:11434"  # Change to your Windows IP if connecting from container
+      model: "qwen:7b"
+      timeout: 300
+    
+    local_ollama:
+      enabled: false
+      api_url: "http://localhost:11434"
+      model: "llama2:13b"
+      timeout: 300
+    
+    cloud:
+      enabled: false
+      provider: "openai"  # or "anthropic"
+      api_key: ""  # Set via environment variable
+      model: "gpt-4"
+  
+  # Routing configuration
+  router:
+    story_request:
+      models: ["qwen:7b"]
+      fallback: ["cloud"]
+    
+    conversation:
+      models: ["qwen:7b"]
+      fallback: ["cloud"]
+    
+    educational:
+      models: ["qwen:7b"]
+      fallback: ["cloud"]
+    
+    complex_reasoning:
+      models: ["cloud"]
+      fallback: []
+
+# Voice Configuration
+voice:
+  stt:
+    engine: "whisper"
+    config:
+      model: "base"  # tiny, base, small, medium, large
+      language: "en"
+      device: "cpu"  # or "cuda" for GPU
+  
+  tts:
+    engine: "piper"
+    config:
+      voice: "en_US-jenny_low"
+      model_path: "./models/en_US-lessac-medium.onnx"
+      speaker: 0
+      length_scale: 1.0
+      noise_scale: 0.667
+
+# Memory Configuration
+memory:
+  backend: "sqlite"
+  
+  sqlite:
+    db_path: "./data/teddy.db"
+  
+  postgresql:
+    host: "localhost"
+    port: 5432
+    database: "teddy"
+    user: "teddy"
+    password: ""
+
+# Personality Configuration
+personality:
+  config_path: "./personality/teddy_default.yaml"
+
+# Child Profile
+child:
+  name: "Neo"
+  age: 0
+  age_group: "preschool"  # toddler, preschool, early_school, school_age, teen
+  language: "en"
+  interests: []
+  favorite_animals: []
+  favorite_colors: []
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "./logs/teddy.log"
+
+# API Server
+api:
+  host: "127.0.0.1"
+  port: 8000
+  debug: false
+  cors_origins: ["http://localhost:3000"]
+
+# Development
+development:
+  mock_stt: false  # Use mock STT for testing
+  mock_tts: false  # Use mock TTS for testing
+  mock_llm: false  # Use mock LLM responses
+  log_prompts: true  # Log prompts sent to LLM

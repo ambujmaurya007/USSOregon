@@ -11,6 +11,12 @@ llm:
       api_url: "http://localhost:11434"  # Change to your Windows IP if connecting from container
       model: "qwen:7b"
       timeout: 300
+
+    gemini:
+      enabled: false
+      model: "gemini-2.5-flash"
+      api_key_env: "GEMINI_API_KEY"
+      timeout: 60
     
     local_ollama:
       enabled: false
@@ -25,25 +31,37 @@ llm:
       model: "gpt-4"
   
   # Routing configuration
-  router:
-    story_request:
-      models: ["qwen:7b"]
-      fallback: ["cloud"]
-    
-    conversation:
-      models: ["qwen:7b"]
-      fallback: ["cloud"]
-    
-    educational:
-      models: ["qwen:7b"]
-      fallback: ["cloud"]
-    
-    complex_reasoning:
-      models: ["cloud"]
-      fallback: []
+  routing:
+    default: "ollama"
+    allow_cloud_fallback: false
+    cloud_fallback_on_error: false
 
 # Voice Configuration
 voice:
+  audio:
+    sample_rate: 16000
+    channels: 1
+    device: null  # Set an input device index or name to override the system default
+    wake_word: "Emma"
+    listen_chunk_seconds: 3.0
+    show_heard_text: false
+    intent_words:
+      greeting: ["hi", "hello", "hey", "emma"]
+      goodbye: ["bye", "goodbye", "tata"]
+      story: ["story", "katha", "tale"]
+      poem: ["poem", "poetry", "rhyme", "rhymes", "rhyming"]
+      song: ["song", "sing", "music", "lullaby"]
+      animal: ["animal", "dog", "cat", "lion", "tiger", "elephant", "bird", "fish"]
+      nature: ["tree", "flower", "rain", "sun", "moon", "star"]
+      space: ["space", "rocket", "planet", "star", "moon"]
+      numbers: ["number", "numbers", "count", "counting", "math"]
+      repeat: ["again", "more", "once more"]
+      stop: ["stop", "no", "enough", "finished", "done"]
+      yes: ["yes", "yeah", "yep", "sure", "please", "okay", "ok"]
+      emotions: ["happy", "sad", "angry", "scared", "sleepy", "tired"]
+      food: ["milk", "water", "food", "banana", "apple"]
+      body: ["hand", "head", "eyes", "nose", "ear", "mouth"]
+
   stt:
     engine: "whisper"
     config:
@@ -57,7 +75,7 @@ voice:
       voice: "en_US-jenny_low"
       model_path: "./models/en_US-lessac-medium.onnx"
       speaker: 0
-      length_scale: 1.0
+      length_scale: 1.25
       noise_scale: 0.667
 
 # Memory Configuration
@@ -74,6 +92,18 @@ memory:
     user: "teddy"
     password: ""
 
+# Local knowledge library
+knowledge:
+  enabled: true
+  root_path: "./knowledge"
+  chunk_size: 900
+  worker:
+    enabled: true
+    analyze_with_ollama: true
+    model: "qwen:7b"
+    max_files_per_cycle: 1
+    poll_seconds: 2
+
 # Personality Configuration
 personality:
   config_path: "./personality/teddy_default.yaml"
@@ -83,7 +113,7 @@ child:
   name: "Neo"
   age: 0
   age_group: "preschool"  # toddler, preschool, early_school, school_age, teen
-  language: "en"
+  language: "auto"
   interests: []
   favorite_animals: []
   favorite_colors: []

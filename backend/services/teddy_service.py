@@ -9,11 +9,12 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from enum import Enum
 
-from ai.providers.ollama_provider import OllamaProvider
+from ai.llm_router.router import AIProviderRouter
 from memory.long_term.memory_backend import SQLiteMemoryBackend, ShortTermMemory
 from personality.personality_engine import PersonalityEngine
 from voice.stt.stt_engine import WhisperSTTEngine
 from voice.tts.tts_engine import PiperTTSEngine
+from knowledge.knowledge_base import KnowledgeBase
 
 
 class RequestType(Enum):
@@ -43,6 +44,7 @@ class TeddyAIService:
         self.memory_backend: Optional[Any] = None
         self.short_term_memory: Optional[Any] = None
         self.personality_engine: Optional[Any] = None
+        self.knowledge_base: Optional[KnowledgeBase] = None
         
         self.logger.info("Teddy AI Service initializing...")
         self._initialize_components()
@@ -90,16 +92,25 @@ class TeddyAIService:
             self.logger.info("✓ Personality engine initialized")
         except Exception as e:
             self.logger.error(f"✗ Personality initialization failed: {e}")
+
+        # Initialize local knowledge
+        try:
+            knowledge_config = self.config.get("knowledge", {})
+            if knowledge_config.get("enabled", True):
+                self.knowledge_base = KnowledgeBase(
+                    knowledge_config.get("root_path", "./knowledge"),
+                    knowledge_config.get("chunk_size", 900),
+                )
+                self.knowledge_base.refresh()
+                self.logger.info("✓ Local knowledge library initialized")
+        except Exception as e:
+            self.logger.warning(f"⚠ Local knowledge unavailable: {e}")
         
         # Initialize LLM provider
         try:
             llm_config = self.config.get("llm", {})
-            provider_name = llm_config.get("primary_provider", "ollama")
-            provider_config = llm_config.get("providers", {}).get(provider_name, {})
-            if provider_name != "ollama":
-                raise ValueError(f"Unsupported provider: {provider_name}")
-            self.llm_provider = OllamaProvider(provider_config)
-            self.logger.info(f"✓ LLM provider initialized: {self.llm_provider.get_name()}")
+            self.llm_provider = AIProviderRouter(llm_config)
+            self.logger.info("✓ LLM provider router initialized")
         except Exception as e:
             self.logger.error(f"✗ LLM initialization failed: {e}")
         
@@ -186,7 +197,7 @@ class TeddyAIService:
         
         return result
 
-    def ask(self, user_message: str) -> str:
+    def ask(self, user_message: str, language: Optional[str] = None) -> str:
         """Generate a personalized response using conversation and saved memory."""
         if not user_message.strip():
             raise ValueError("user_message must not be empty")
@@ -202,13 +213,22 @@ class TeddyAIService:
         memories = [memory for memory in memories if memory.category != "conversation"]
         memory_texts = [memory.content for memory in memories]
         child_profile = self.config.get("child", {})
+        conversation_language = language or child_profile.get("language", "auto")
         system_prompt = self.personality_engine.construct_system_prompt(
             child_profile=child_profile,
             memories=memory_texts,
-            language=child_profile.get("language", "en"),
+            language=conversation_language,
         )
         conversation = self.short_term_memory.get_context()
         prompt_parts = [system_prompt]
+        if self.knowledge_base:
+            knowledge_matches = self.knowledge_base.search(user_message, limit=4)
+            if knowledge_matches:
+                prompt_parts.extend([
+                    "Relevant local knowledge (use this material when answering):",
+                    self.knowledge_base.format_for_prompt(knowledge_matches),
+                    "",
+                ])
         if conversation:
             prompt_parts.extend(["Conversation so far:", conversation])
         prompt_parts.extend([
@@ -216,12 +236,41 @@ class TeddyAIService:
             f"{self.personality_engine.personality.name}:",
         ])
 
-        response = self.llm_provider.generate("\n".join(prompt_parts))
+        request_context = {
+            "task_type": self._classify_request(user_message),
+            "requires_complex_reasoning": self._requires_complex_reasoning(user_message),
+            "is_private": True,
+            "language": conversation_language,
+        }
+        response = self.llm_provider.generate("\n".join(prompt_parts), context=request_context)
         child_name = child_profile.get("name", "Neo")
         companion_name = self.personality_engine.personality.name
         self._record_turn(child_name, user_message.strip())
         self._record_turn(companion_name, response.text)
         return response.text
+
+    def get_exact_knowledge(self, query: str) -> Optional[str]:
+        """Return exact local source text when a knowledge item is recitable."""
+        if not self.knowledge_base:
+            return None
+        match = self.knowledge_base.find_exact(query)
+        return match.content if match else None
+
+    def _classify_request(self, user_message: str) -> str:
+        """Classify requests for routing without using another model."""
+        lowered = user_message.casefold()
+        if re.search(r"\b(story|tale|bedtime|poem|song)\b", lowered):
+            return "storytelling"
+        if re.search(r"\b(why|how|explain|learn|teach|math|number)\b", lowered):
+            return "education"
+        return "conversation"
+
+    def _requires_complex_reasoning(self, user_message: str) -> bool:
+        """Identify requests that may benefit from an enabled cloud provider."""
+        return bool(re.search(
+            r"\b(analyze|analyse|complex|detailed|in detail|compare|reason|explain why)\b",
+            user_message.casefold(),
+        ))
 
     def _restore_conversation(self):
         """Restore the latest persisted conversation turns into short-term memory."""
@@ -289,6 +338,7 @@ class TeddyAIService:
                 "llm": self.llm_provider is not None and self.llm_provider.is_available(),
                 "stt": self.stt_engine is not None and self.stt_engine.is_available(),
                 "tts": self.tts_engine is not None and self.tts_engine.is_available(),
+                "knowledge": self.knowledge_base is not None,
             }
         }
 

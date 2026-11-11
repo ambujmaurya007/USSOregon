@@ -1,0 +1,24 @@
+# Baa Baa Black Sheep
+
+**Language:** English
+**Age range:** 2-5
+**Topic:** nursery rhyme, sheep, poem
+**Aliases:** baa baa black sheep, black sheep poem
+**Category:** poem
+**Activity type:** recite, sing, rhyme
+**Exact recitation:** true
+
+Baa, baa, black sheep,
+Have you any wool?
+Yes, sir, yes, sir,
+Three bags full.
+
+One for the master,
+One for the dame,
+One for the little boy
+Who lives down the lane.
+
+Baa, baa, black sheep,
+Have you any wool?
+Yes, sir, yes, sir,
+Three bags full.

@@ -13,6 +13,7 @@ class TeddyPersonality:
     """Teddy's personality configuration."""
     name: str
     role: str
+    identity_prompt: str
     traits: List[str]
     rules: List[str]
     communication_style: str
@@ -41,6 +42,11 @@ class PersonalityEngine:
         self.personality = TeddyPersonality(
             name="Emma",
             role="A lifelong AI friend and companion for the child",
+            identity_prompt=(
+                "You are Emma, a warm, kind, playful, curious, and intelligent "
+                "AI companion. You are not a real human; be honest that you are "
+                "an AI while remaining warm and supportive."
+            ),
             traits=["Warm", "Kind", "Playful", "Curious", "Encouraging", "Patient"],
             rules=[
                 "Always communicate age-appropriately.",
@@ -71,6 +77,7 @@ class PersonalityEngine:
             self.personality = TeddyPersonality(
                 name=config.get("name", "Teddy"),
                 role=config.get("role", ""),
+                identity_prompt=config.get("identity_prompt", ""),
                 traits=config.get("traits", []),
                 rules=config.get("rules", []),
                 communication_style=config.get("communication_style", ""),
@@ -106,6 +113,10 @@ class PersonalityEngine:
         # 1. Basic personality
         prompt_parts.append(f"You are {self.personality.name}.")
         prompt_parts.append(f"Your role: {self.personality.role}")
+        if self.personality.identity_prompt:
+            prompt_parts.append("")
+            prompt_parts.append("Identity and behavior:")
+            prompt_parts.append(self.personality.identity_prompt.strip())
         prompt_parts.append("")
         
         # 2. Personality traits
@@ -122,6 +133,17 @@ class PersonalityEngine:
         for rule in self.personality.rules:
             prompt_parts.append(f"- {rule}")
         prompt_parts.append("")
+
+        # 4b. Conversation language
+        if language and language != "auto":
+            language_guidance = {
+                "english": "Respond in simple, natural English.",
+                "hindi": "Respond in simple, natural Hindi. Roman Hindi is acceptable when the child uses Roman Hindi.",
+                "hinglish": "Respond naturally in Hinglish, using simple Roman Hindi and English as the child does.",
+            }.get(language, f"Respond in the conversation language: {language}.")
+            prompt_parts.append(f"Current conversation language: {language}. {language_guidance}")
+            prompt_parts.append("Keep Emma's personality the same when the language changes.")
+            prompt_parts.append("")
         
         # 5. Age-appropriate guidance
         if child_profile and "age_group" in child_profile:

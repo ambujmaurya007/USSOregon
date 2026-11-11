@@ -97,6 +97,10 @@ pip install openai-whisper
 # First run downloads the model (~1.4GB)
 ```
 
+Whisper also requires FFmpeg to decode microphone recordings. The project installs
+`imageio-ffmpeg` with the main requirements and uses its bundled executable when
+FFmpeg is not already available on Windows.
+
 ### For Text-to-Speech (Piper)
 ```bash
 pip install piper-tts
@@ -133,6 +137,23 @@ llm:
     ollama:
       api_url: "http://localhost:11434"
       model: "qwen:7b"
+```
+
+Gemini is optional and disabled by default. To enable it, set `GEMINI_API_KEY`
+in the environment, set `llm.providers.gemini.enabled` to `true`, and enable
+cloud fallback only if sending eligible requests to the cloud is acceptable:
+
+```yaml
+llm:
+  providers:
+    gemini:
+      enabled: true
+      model: "gemini-2.5-flash"
+      api_key_env: "GEMINI_API_KEY"
+  routing:
+    default: "ollama"
+    allow_cloud_fallback: true
+    cloud_fallback_on_error: true
 ```
 
 ## Step 8: Run Demo

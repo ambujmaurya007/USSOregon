@@ -48,6 +48,7 @@ logs/
 *.sqlite
 *.sqlite3
 *.log
+knowledge/.emma/
 
 # Environment variables
 .env
@@ -92,7 +93,7 @@ models/
 *.ckpt
 
 # Audio files (for testing)
-audio/
+/audio/
 *.wav
 *.mp3
 *.flac

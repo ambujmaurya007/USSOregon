@@ -94,11 +94,17 @@ class PiperTTSEngine(TTSEngine):
 
             import wave
             from pathlib import Path
+            from piper.config import SynthesisConfig
 
             output_file = Path(output_path)
             output_file.parent.mkdir(parents=True, exist_ok=True)
+            synthesis_config = SynthesisConfig(
+                speaker_id=self.speaker,
+                length_scale=self.length_scale,
+                noise_scale=self.noise_scale,
+            )
             with wave.open(str(output_file), "wb") as wav_file:
-                self.piper.synthesize_wav(text, wav_file)
+                self.piper.synthesize_wav(text, wav_file, syn_config=synthesis_config)
 
             with wave.open(str(output_file), "rb") as wav_file:
                 duration_ms = wav_file.getnframes() / wav_file.getframerate() * 1000
